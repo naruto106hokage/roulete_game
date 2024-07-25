@@ -8,13 +8,11 @@ public class RandomNumberGenerator : MonoBehaviour
     public TextMeshProUGUI resultText;
     public Transform rotatingImage;
     [SerializeField] private float countdownTime = 40f;
-    public int randomNumber;
     public static RandomNumberGenerator instance;
 
     void Start()
     {
         resultText.gameObject.SetActive(false);
-        //StartCoroutine(StartCountdown());
     }
 
     public IEnumerator StartCountdown()
@@ -25,11 +23,13 @@ public class RandomNumberGenerator : MonoBehaviour
             yield return new WaitForSeconds(1f);
             countdownTime--;
         }
-
-        // Generate a random number between 0 and 36
-        //randomNumber = Random.Range(0, 37);
-        //Debug.Log("randomNumber :" + randomNumber);
-        //rotationManager.SetWinningPosition(360/randomNumber);
-        //rotationManager.Rotate();
+        timerText.gameObject.SetActive(false);
     }
+
+    public void display(int number)
+    {
+        resultText.gameObject.SetActive(true);
+        resultText.text = number.ToString();
+    }
+
 }

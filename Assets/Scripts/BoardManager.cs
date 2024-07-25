@@ -4,15 +4,23 @@ using UnityEngine;
 
 public class BoardManager : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] private GameObject[] boardMarker;
 
-    // Update is called once per frame
-    void Update()
+    public void disableAllMarker()
     {
-        
+        foreach (GameObject obj in boardMarker)
+        {
+            obj.SetActive(false);
+        }
+    }
+    public void setBoardMarker(int number)
+    {
+        foreach (GameObject obj in boardMarker)
+        {
+            if (obj.name == number.ToString())
+            {
+                obj.SetActive(true);
+            }
+        }
     }
 }

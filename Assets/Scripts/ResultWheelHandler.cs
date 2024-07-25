@@ -9,10 +9,11 @@ public class ResultWheelHandler : MonoBehaviour
     [SerializeField] private float rotationSpeed = 150f;
     [SerializeField] private GameObject wheel;
     private Transform wheelTransform;
-
+    [SerializeField] private GameObject wheelPrefab;
 
     public void disableAll()
     {
+        wheelPrefab.SetActive(true);
         foreach (GameObject obj in winWheelPos)
         {
             obj.SetActive(false);
@@ -21,6 +22,7 @@ public class ResultWheelHandler : MonoBehaviour
 
     public IEnumerator rotateTheWheel()
     {
+        wheelPrefab.SetActive(true);
         wheelTransform = wheel.GetComponent<Transform>();
         float timeElapsed = 0f;
 
