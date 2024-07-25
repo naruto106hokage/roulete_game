@@ -4,11 +4,12 @@ using System.Collections;
 public class RouletteWheel : MonoBehaviour
 {
     public Transform wheel; // The wheel to rotate
-    public Transform ball;  // The ball to rotate
+    public Transform ball;  // The ball to move
     public float wheelRotationSpeed = 100f; // Rotation speed of the wheel
     public float ballRotationSpeed = 150f;  // Rotation speed of the ball
     public float stopAfterSeconds = 5f;     // Time to stop rotation
-    public int targetPosition = 0;          // Target position (0-36)
+    public int targetPosition = 0;          // Target position index (0-36)
+    public Transform[] ballPositions;       // Array of Transforms for ball positions
 
     private bool isRotating = true;
     private float elapsedTime = 0f;
@@ -21,7 +22,7 @@ public class RouletteWheel : MonoBehaviour
             wheel.Rotate(Vector3.back * wheelRotationSpeed * Time.deltaTime);
 
             // Rotate the ball counter-clockwise
-            //ball.Rotate(Vector3.forward * ballRotationSpeed * Time.deltaTime);
+            ball.Rotate(Vector3.forward * ballRotationSpeed * Time.deltaTime);
 
             // Increment elapsed time
             elapsedTime += Time.deltaTime;
@@ -30,19 +31,17 @@ public class RouletteWheel : MonoBehaviour
             if (elapsedTime >= stopAfterSeconds)
             {
                 isRotating = false;
-                StartCoroutine(PlaceBall());
+                StartCoroutine(MoveBallToPosition());
             }
         }
     }
 
-    IEnumerator PlaceBall()
+    IEnumerator MoveBallToPosition()
     {
         yield return new WaitForSeconds(1f); // A short delay before placing the ball
 
-        // Calculate the angle for the target position
-        float angle = 360f - (360f / 37f * targetPosition); // 37 slots including 0
-        // Set the ball's rotation to the target position
-        ball.localEulerAngles = new Vector3(0, 0, angle);
+        // Move the ball to the target position
+        ball.position = ballPositions[targetPosition].position;
 
         Debug.Log("Ball placed at position: " + targetPosition);
     }
