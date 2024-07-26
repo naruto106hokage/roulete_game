@@ -23,6 +23,7 @@ public class ResultWheelHandler : MonoBehaviour
     public IEnumerator rotateTheWheel()
     {
         wheelPrefab.SetActive(true);
+        wheel.SetActive(true);
         wheelTransform = wheel.GetComponent<Transform>();
         float timeElapsed = 0f;
 
