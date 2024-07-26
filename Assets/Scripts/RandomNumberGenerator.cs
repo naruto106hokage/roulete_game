@@ -31,5 +31,4 @@ public class RandomNumberGenerator : MonoBehaviour
         resultText.gameObject.SetActive(true);
         resultText.text = number.ToString();
     }
-
 }
