@@ -21111,6 +21111,13 @@ MonoBehaviour:
   - {fileID: 2062834155}
   - {fileID: 1923671902}
   - {fileID: 1675864815}
+  levelSprites:
+  - {fileID: 21300000, guid: c10a4089c8947ec4fb650d62c7892f7f, type: 3}
+  - {fileID: 21300000, guid: 4a65f21c58f4dfd4495e61fb81890bc1, type: 3}
+  - {fileID: 21300000, guid: e5017472212577749a6e2e39a87a8fe5, type: 3}
+  - {fileID: 21300000, guid: 28a1b9498ff04564b8f57af353a57bcb, type: 3}
+  - {fileID: 21300000, guid: c338e4543cacefb419152a170a61b89a, type: 3}
+  thresholds: 3200000064000000f4010000e8030000b80b0000
 --- !u!1 &1583423657
 GameObject:
   m_ObjectHideFlags: 0

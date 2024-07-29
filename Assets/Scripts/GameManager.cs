@@ -46,7 +46,7 @@ public class GameManager : MonoBehaviour
     {
         resultWheelHandler.disableAll();
         boardManager.disableAllMarker();
-        betManager.disableAllImages();
+        //betManager.disableAllImages();
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
