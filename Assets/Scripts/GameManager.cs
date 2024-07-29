@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private RouletteWheel rouletteWheel;
     [SerializeField] private BoardManager boardManager;
     [SerializeField] private ListManager listManager;
+    [SerializeField] private BetManager betManager;
     [SerializeField] private float repeatInterval = 5f;
 
     private const string PlayerPrefsKey = "RandomNumbersList";
@@ -18,7 +19,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (randomNumberGenerator == null || resultWheelHandler == null || rouletteWheel == null || boardManager == null)
+        if (randomNumberGenerator == null || resultWheelHandler == null || rouletteWheel == null || boardManager == null || betManager == null)
         {
             Debug.LogError("Reference not set");
         }
@@ -45,6 +46,7 @@ public class GameManager : MonoBehaviour
     {
         resultWheelHandler.disableAll();
         boardManager.disableAllMarker();
+        betManager.disableAllImages();
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);

@@ -6,9 +6,8 @@ public class BetManager : MonoBehaviour
     [SerializeField] private GameObject[] imagesToActivate; // Array of images
     [SerializeField] private Button[] buttons; // Array of buttons
 
-    void Start()
+    public void disableAllImages()
     {
-        // Ensure all images are initially inactive
         foreach (GameObject image in imagesToActivate)
         {
             image.SetActive(false);
