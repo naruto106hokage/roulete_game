@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float repeatInterval = 5f;
 
     private const string PlayerPrefsKey = "RandomNumbersList";
-    private const int MaxRandomNumbers = 7;
+    private const int MaxRandomNumbers = 13;
 
     private List<int> randomNumbers = new List<int>();
 

@@ -24,12 +24,12 @@ public class RandomNumberGenerator : MonoBehaviour
 
         while (repeatInterval > 0)
         {
-            timerText.text = "Time Left: " + repeatInterval.ToString("F0"); // Display the countdown as an integer
+            timerText.text = "Time Left: " + repeatInterval.ToString("F0"); 
 
             float timeRatio = repeatInterval / initialTime;
-            timerImage.fillAmount = timeRatio; // Update fillAmount based on time left
+            timerImage.fillAmount = timeRatio; 
 
-            // Change color to red if time is below the warning threshold
+          
             if (timeRatio <= warningThreshold)
             {
                 timerImage.color = warningColor;
@@ -40,7 +40,7 @@ public class RandomNumberGenerator : MonoBehaviour
         }
 
         timerText.gameObject.SetActive(false);
-        timerImage.fillAmount = 0f; // Ensure the fillAmount is set to 0 when the timer ends
+        timerImage.fillAmount = 0f; 
     }
 
     public void display(int number)
