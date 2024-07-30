@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // Import the TextMeshPro namespace
+using System.Collections; // Required for IEnumerator
 
 public class BetManager : MonoBehaviour
 {
@@ -7,21 +9,44 @@ public class BetManager : MonoBehaviour
     [SerializeField] private Button[] buttons; // Array of buttons
     [SerializeField] private Sprite[] levelSprites; // Array of sprites for different levels
     [SerializeField] private int[] thresholds; // Value thresholds for changing sprites
+    [SerializeField] private Button[] betValueButtons; // These hold the values for bet increment amount
+    [SerializeField] private CanvasGroup bannerCanvasGroup; // CanvasGroup for the banner to fade
+    private int selectedBetValue = 0; // Default value
 
     void Start()
     {
-        // Set up button listeners
+        // Set up button listeners for images
         foreach (Button button in buttons)
         {
             button.onClick.AddListener(() => OnButtonClick(button));
         }
-    }
 
-    public void disableAllImages()
-    {
+        // Set up button listeners for bet values
+        foreach (Button betButton in betValueButtons)
+        {
+            betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
+        }
+
+        // Deactivate images initially
         foreach (GameObject image in imagesToActivate)
         {
             image.SetActive(false);
+        }
+
+        enableButtons();
+    }
+
+    private void OnBetValueButtonClick(Button betButton)
+    {
+        // Parse the bet value from the button's TMP text component
+        TextMeshProUGUI tmpText = betButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmpText != null && int.TryParse(tmpText.text, out int value))
+        {
+            selectedBetValue = value;
+        }
+        else
+        {
+            Debug.LogError("Invalid bet value format or TextMeshPro component missing.");
         }
     }
 
@@ -30,6 +55,13 @@ public class BetManager : MonoBehaviour
         // Get the name of the clicked button
         string buttonName = clickedButton.name;
 
+        // Check if a bet value has been selected
+        if (selectedBetValue == 0)
+        {
+            ShowBanner();
+            return; // Exit the function to prevent further processing
+        }
+
         // Activate the image associated with the clicked button
         foreach (GameObject image in imagesToActivate)
         {
@@ -37,33 +69,32 @@ public class BetManager : MonoBehaviour
             {
                 image.SetActive(true);
 
-                // Check if the image already has a Text component
-                Text textComponent = image.GetComponentInChildren<Text>();
-                if (textComponent == null)
+                // Check if the image already has a TMP component
+                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmpComponent == null)
                 {
-                    // Add a Text component if it doesn't exist
-                    GameObject textObj = new GameObject("Text");
-                    textObj.transform.SetParent(image.transform);
+                    // Add a TMP component if it doesn't exist
+                    GameObject tmpObj = new GameObject("TMPText");
+                    tmpObj.transform.SetParent(image.transform);
 
-                    // Set up the Text component
-                    textComponent = textObj.AddComponent<Text>();
-                    textComponent.text = "0"; // Initialize with 0
-                    textComponent.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                    textComponent.alignment = TextAnchor.MiddleCenter;
-                    textComponent.color = Color.black; // Set font color to black
-                    textComponent.fontSize = 30; // Set font size to 30
+                    // Set up the TMP component
+                    tmpComponent = tmpObj.AddComponent<TextMeshProUGUI>();
+                    tmpComponent.text = "0"; // Initialize with 0
+                    tmpComponent.alignment = TextAlignmentOptions.Center;
+                    tmpComponent.color = Color.black; // Set font color to black
+                    tmpComponent.fontSize = 30; // Set font size to 30
 
                     // Set the RectTransform properties
-                    RectTransform rectTransform = textComponent.GetComponent<RectTransform>();
+                    RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
                     rectTransform.anchoredPosition = Vector2.zero;
                     rectTransform.sizeDelta = image.GetComponent<RectTransform>().sizeDelta;
                 }
 
-                // Update the text value
-                if (int.TryParse(textComponent.text, out int currentValue))
+                // Update the TMP text value
+                if (int.TryParse(tmpComponent.text, out int currentValue))
                 {
-                    int newValue = currentValue + 20;
-                    textComponent.text = newValue.ToString();
+                    int newValue = currentValue + selectedBetValue;
+                    tmpComponent.text = newValue.ToString();
 
                     // Determine the appropriate sprite based on the value
                     Sprite appropriateSprite = GetSpriteForValue(newValue);
@@ -78,7 +109,7 @@ public class BetManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("Text component does not contain a valid integer.");
+                    Debug.LogWarning("TextMeshPro component does not contain a valid integer.");
                 }
 
                 break; // Exit the loop as we found the matching image
@@ -96,5 +127,49 @@ public class BetManager : MonoBehaviour
             }
         }
         return null; // Return null if no threshold is met
+    }
+
+    public void DisableButtons()
+    {
+        foreach (Button button in buttons)
+        {
+            button.interactable = false;
+        }
+    }
+
+    public void enableButtons()
+    {
+        foreach (Button button in buttons)
+        {
+            button.interactable = true;
+        }
+    }
+
+    private void ShowBanner()
+    {
+        bannerCanvasGroup.alpha = 1;
+        bannerCanvasGroup.gameObject.SetActive(true);
+        Invoke("FadeOutBanner", 3f); // Fade out after 3 seconds
+    }
+
+    private void FadeOutBanner()
+    {
+        StartCoroutine(FadeCanvasGroup(bannerCanvasGroup, 1f, 0f, 3f));
+    }
+
+    private IEnumerator FadeCanvasGroup(CanvasGroup cg, float start, float end, float duration)
+    {
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            cg.alpha = Mathf.Lerp(start, end, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        cg.alpha = end;
+        if (end == 0)
+        {
+            cg.gameObject.SetActive(false);
+        }
     }
 }
