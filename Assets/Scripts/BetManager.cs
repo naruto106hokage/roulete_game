@@ -11,6 +11,7 @@ public class BetManager : MonoBehaviour
     [SerializeField] private int[] thresholds; // Value thresholds for changing sprites
     [SerializeField] private Button[] betValueButtons; // These hold the values for bet increment amount
     [SerializeField] private CanvasGroup bannerCanvasGroup; // CanvasGroup for the banner to fade
+    [SerializeField] private TextMeshProUGUI totalBetValueText; // TMP Text for total bet value
     private int selectedBetValue = 0; // Default value
 
     void Start()
@@ -82,7 +83,7 @@ public class BetManager : MonoBehaviour
                     tmpComponent.text = "0"; // Initialize with 0
                     tmpComponent.alignment = TextAlignmentOptions.Center;
                     tmpComponent.color = Color.black; // Set font color to black
-                    tmpComponent.fontSize = 30; // Set font size to 30
+                    tmpComponent.fontSize = 20; // Set font size to 30
 
                     // Set the RectTransform properties
                     RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
@@ -115,6 +116,9 @@ public class BetManager : MonoBehaviour
                 break; // Exit the loop as we found the matching image
             }
         }
+
+        // Calculate the total bet value and update the TMP text component
+        UpdateTotalBetValue();
     }
 
     private Sprite GetSpriteForValue(int value)
@@ -127,6 +131,11 @@ public class BetManager : MonoBehaviour
             }
         }
         return null; // Return null if no threshold is met
+    }
+
+    public void invokeDisableButtons(float time)
+    {
+        Invoke("DisableButtons", time);
     }
 
     public void DisableButtons()
@@ -144,12 +153,12 @@ public class BetManager : MonoBehaviour
             button.interactable = true;
         }
     }
-
+        
     private void ShowBanner()
     {
         bannerCanvasGroup.alpha = 1;
         bannerCanvasGroup.gameObject.SetActive(true);
-        Invoke("FadeOutBanner", 3f); // Fade out after 3 seconds
+        Invoke("FadeOutBanner", 1f); // Fade out after 1 seconds
     }
 
     private void FadeOutBanner()
@@ -171,5 +180,22 @@ public class BetManager : MonoBehaviour
         {
             cg.gameObject.SetActive(false);
         }
+    }
+
+    private void UpdateTotalBetValue()
+    {
+        int totalValue = 0;
+
+        foreach (GameObject image in imagesToActivate)
+        {
+            TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
+            {
+                totalValue += value;
+            }
+        }
+
+        // Update the TMP text component with the total bet value
+        totalBetValueText.text = $"Curent Play: {totalValue}";
     }
 }

@@ -10,7 +10,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BoardManager boardManager;
     [SerializeField] private ListManager listManager;
     [SerializeField] private BetManager betManager;
-    [SerializeField] private float repeatInterval = 5f;
+     private float repeatInterval = 40f;
+     private float playAgain = 5f;
 
     private const string PlayerPrefsKey = "RandomNumbersList";
     private const int MaxRandomNumbers = 13;
@@ -38,7 +39,7 @@ public class GameManager : MonoBehaviour
         while (true)
         {
             yield return StartCoroutine(startGame());
-            yield return new WaitForSeconds(repeatInterval);
+            yield return new WaitForSeconds(playAgain);
         }
     }
 
@@ -47,10 +48,11 @@ public class GameManager : MonoBehaviour
         resultWheelHandler.disableAll();
         boardManager.disableAllMarker();
         betManager.enableButtons();
-        //betManager.DisableBetPlacement(repeatInterval-1);
+        //betManager.invokeDisableButtons(repeatInterval-1);
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
+        betManager.DisableButtons();
         AddRandomNumber(randomNumber);
         resultWheelHandler.disableAll();
         yield return StartCoroutine(resultWheelHandler.rotateTheWheel());
