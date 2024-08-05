@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro; // Import the TextMeshPro namespace
 using System.Collections; // Required for IEnumerator
+using System.Collections.Generic; // Required for List
 
 public class BetManager : MonoBehaviour
 {
-    [SerializeField] private GameObject[] imagesToActivate; // Array of images
+    [SerializeField] private GameObject imagePrefab; // Prefab of the image to instantiate
     [SerializeField] private Button[] buttons; // Array of buttons
     [SerializeField] private Sprite[] levelSprites; // Array of sprites for different levels
     [SerializeField] private int[] thresholds; // Value thresholds for changing sprites
@@ -13,6 +14,9 @@ public class BetManager : MonoBehaviour
     [SerializeField] private CanvasGroup bannerCanvasGroup; // CanvasGroup for the banner to fade
     [SerializeField] private TextMeshProUGUI totalBetValueText; // TMP Text for total bet value
     private int selectedBetValue = 0; // Default value
+
+    // List to keep track of instantiated images
+    private List<GameObject> imagesToActivate = new List<GameObject>();
 
     void Start()
     {
@@ -28,12 +32,6 @@ public class BetManager : MonoBehaviour
             betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
         }
 
-        // Deactivate images initially
-        foreach (GameObject image in imagesToActivate)
-        {
-            image.SetActive(false);
-        }
-
         enableButtons();
     }
 
@@ -44,6 +42,7 @@ public class BetManager : MonoBehaviour
         if (tmpText != null && int.TryParse(tmpText.text, out int value))
         {
             selectedBetValue = value;
+            Debug.Log($"Bet value button pressed: {betButton.name}, Value: {selectedBetValue}");
         }
         else
         {
@@ -53,8 +52,7 @@ public class BetManager : MonoBehaviour
 
     private void OnButtonClick(Button clickedButton)
     {
-        // Get the name of the clicked button
-        string buttonName = clickedButton.name;
+        Debug.Log($"Button pressed: {clickedButton.name}");
 
         // Check if a bet value has been selected
         if (selectedBetValue == 0)
@@ -63,58 +61,66 @@ public class BetManager : MonoBehaviour
             return; // Exit the function to prevent further processing
         }
 
-        // Activate the image associated with the clicked button
-        foreach (GameObject image in imagesToActivate)
+        // Instantiate the image prefab
+        GameObject newImage = Instantiate(imagePrefab, clickedButton.transform.parent);
+
+        // Set the position of the new image to the position of the clicked button
+        RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
+        RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
+
+        newImageRectTransform.anchoredPosition = buttonRectTransform.anchoredPosition;
+
+        // Reset the rotation and set the scale to half
+        newImage.transform.localRotation = Quaternion.identity;
+        newImage.transform.localScale = Vector3.one * 0.5f; // Set scale to half
+
+        // Add the new image to the list
+        imagesToActivate.Add(newImage);
+
+        // Check if the new image already has a TMP component
+        TextMeshProUGUI tmpComponent = newImage.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmpComponent == null)
         {
-            if (image.name == buttonName)
+            // Add a TMP component if it doesn't exist
+            GameObject tmpObj = new GameObject("TMPText");
+            tmpObj.transform.SetParent(newImage.transform);
+
+            // Set up the TMP component
+            tmpComponent = tmpObj.AddComponent<TextMeshProUGUI>();
+            tmpComponent.text = "0"; // Initialize with 0
+            tmpComponent.alignment = TextAlignmentOptions.Center;
+            tmpComponent.color = Color.black; // Set font color to black
+            tmpComponent.fontSize = 20; // Set font size to 20
+
+            // Set the RectTransform properties
+            RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.sizeDelta = new Vector2(40, 40); // Adjust size as needed
+            rectTransform.anchoredPosition = Vector2.zero; // Center it
+        }
+
+        // Update the TMP text value
+        if (int.TryParse(tmpComponent.text, out int currentValue))
+        {
+            int newValue = currentValue + selectedBetValue;
+            tmpComponent.text = newValue.ToString();
+
+            // Determine the appropriate sprite based on the value
+            Sprite appropriateSprite = GetSpriteForValue(newValue);
+            if (appropriateSprite != null)
             {
-                image.SetActive(true);
-
-                // Check if the image already has a TMP component
-                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
-                if (tmpComponent == null)
+                Image imgComponent = newImage.GetComponent<Image>();
+                if (imgComponent != null)
                 {
-                    // Add a TMP component if it doesn't exist
-                    GameObject tmpObj = new GameObject("TMPText");
-                    tmpObj.transform.SetParent(image.transform);
-
-                    // Set up the TMP component
-                    tmpComponent = tmpObj.AddComponent<TextMeshProUGUI>();
-                    tmpComponent.text = "0"; // Initialize with 0
-                    tmpComponent.alignment = TextAlignmentOptions.Center;
-                    tmpComponent.color = Color.black; // Set font color to black
-                    tmpComponent.fontSize = 20; // Set font size to 30
-
-                    // Set the RectTransform properties
-                    RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
-                    rectTransform.anchoredPosition = Vector2.zero;
-                    rectTransform.sizeDelta = image.GetComponent<RectTransform>().sizeDelta;
+                    imgComponent.sprite = appropriateSprite;
                 }
-
-                // Update the TMP text value
-                if (int.TryParse(tmpComponent.text, out int currentValue))
-                {
-                    int newValue = currentValue + selectedBetValue;
-                    tmpComponent.text = newValue.ToString();
-
-                    // Determine the appropriate sprite based on the value
-                    Sprite appropriateSprite = GetSpriteForValue(newValue);
-                    if (appropriateSprite != null)
-                    {
-                        Image imgComponent = image.GetComponent<Image>();
-                        if (imgComponent != null)
-                        {
-                            imgComponent.sprite = appropriateSprite;
-                        }
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("TextMeshPro component does not contain a valid integer.");
-                }
-
-                break; // Exit the loop as we found the matching image
             }
+        }
+        else
+        {
+            Debug.LogWarning("TextMeshPro component does not contain a valid integer.");
         }
 
         // Calculate the total bet value and update the TMP text component
@@ -153,12 +159,12 @@ public class BetManager : MonoBehaviour
             button.interactable = true;
         }
     }
-        
+
     private void ShowBanner()
     {
         bannerCanvasGroup.alpha = 1;
         bannerCanvasGroup.gameObject.SetActive(true);
-        Invoke("FadeOutBanner", 1f); // Fade out after 1 seconds
+        Invoke("FadeOutBanner", 1f); // Fade out after 1 second
     }
 
     private void FadeOutBanner()
@@ -196,6 +202,6 @@ public class BetManager : MonoBehaviour
         }
 
         // Update the TMP text component with the total bet value
-        totalBetValueText.text = $"Curent Play: {totalValue}";
+        totalBetValueText.text = $"Current Play: {totalValue}";
     }
 }

@@ -52,7 +52,7 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
-        betManager.DisableButtons();
+        //betManager.DisableButtons();
         AddRandomNumber(randomNumber);
         resultWheelHandler.disableAll();
         yield return StartCoroutine(resultWheelHandler.rotateTheWheel());
