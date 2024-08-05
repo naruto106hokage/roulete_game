@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BoardManager boardManager;
     [SerializeField] private ListManager listManager;
     [SerializeField] private BetManager betManager;
+
+
      private float repeatInterval = 40f;
      private float playAgain = 5f;
 
@@ -47,15 +49,19 @@ public class GameManager : MonoBehaviour
     {
         resultWheelHandler.disableAll();
         boardManager.disableAllMarker();
-        betManager.enableButtons();
-        //betManager.invokeDisableButtons(repeatInterval-1);
+        randomNumberGenerator.disableResultNumber();
+        betManager.DestroyAllImages();
+        betManager.EnableButtons();
+        betManager.InvokeDisableButtons(repeatInterval-1);
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
+        betManager.DestroyAllImages();
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
-        //betManager.DisableButtons();
+        betManager.DisableButtons();
         AddRandomNumber(randomNumber);
         resultWheelHandler.disableAll();
         yield return StartCoroutine(resultWheelHandler.rotateTheWheel());
+
         resultWheelHandler.displayResult(randomNumber);
         randomNumberGenerator.display(randomNumber);
         boardManager.setBoardMarker(randomNumber);

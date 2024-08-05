@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.EventSystems; // Required for EventTrigger
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -14,9 +14,11 @@ public class BetManager : MonoBehaviour
     [SerializeField] private Button[] betValueButtons;
     [SerializeField] private CanvasGroup bannerCanvasGroup;
     [SerializeField] private TextMeshProUGUI totalBetValueText;
+    [SerializeField] private Image[] neighbourBetImages;
     private int selectedBetValue = 0;
 
     private List<GameObject> imagesToActivate = new List<GameObject>();
+    private Dictionary<string, int> betsPlaced = new Dictionary<string, int>();
 
     void Start()
     {
@@ -30,7 +32,7 @@ public class BetManager : MonoBehaviour
             betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
         }
 
-        enableButtons();
+        EnableButtons();
     }
 
     private void OnBetValueButtonClick(Button betButton)
@@ -61,9 +63,32 @@ public class BetManager : MonoBehaviour
         RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
         RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
 
+        // Set the anchored position of the new image to the button's position
         newImageRectTransform.anchoredPosition = buttonRectTransform.anchoredPosition;
         newImage.transform.localRotation = Quaternion.identity;
-        newImage.transform.localScale = Vector3.one * 0.5f;
+
+        // Check if the button name is one of the specific ones that require different size
+        if (clickedButton.name == "Tiers" || clickedButton.name == "Orphelin" || clickedButton.name == "Voisin" || clickedButton.name == "Zero")
+        {
+            foreach (var neighbourBetImage in neighbourBetImages)
+            {
+                if (neighbourBetImage.name == clickedButton.name)
+                {
+                    // Set the image properties to match the neighbourBetImage
+                    newImageRectTransform.sizeDelta = neighbourBetImage.GetComponent<RectTransform>().sizeDelta;
+                    newImageRectTransform.anchoredPosition = neighbourBetImage.GetComponent<RectTransform>().anchoredPosition;
+                    newImageRectTransform.localScale = neighbourBetImage.GetComponent<RectTransform>().localScale;
+                    newImageRectTransform.pivot = neighbourBetImage.GetComponent<RectTransform>().pivot;
+                    newImageRectTransform.anchorMin = neighbourBetImage.GetComponent<RectTransform>().anchorMin;
+                    newImageRectTransform.anchorMax = neighbourBetImage.GetComponent<RectTransform>().anchorMax;
+                    newImageRectTransform.rotation = neighbourBetImage.GetComponent<RectTransform>().rotation;
+                }
+            }
+        }
+        else
+        {
+            newImage.transform.localScale = Vector3.one * 0.5f;
+        }
 
         imagesToActivate.Add(newImage);
 
@@ -109,6 +134,7 @@ public class BetManager : MonoBehaviour
 
         AddClickEventToChip(newImage);
 
+        UpdateBets(clickedButton.name, selectedBetValue);
         UpdateTotalBetValue();
     }
 
@@ -140,6 +166,7 @@ public class BetManager : MonoBehaviour
                 }
             }
 
+            UpdateBets(chip.transform.parent.name, selectedBetValue);
             UpdateTotalBetValue();
         }
     }
@@ -156,7 +183,7 @@ public class BetManager : MonoBehaviour
         return null;
     }
 
-    public void invokeDisableButtons(float time)
+    public void InvokeDisableButtons(float time)
     {
         Invoke("DisableButtons", time);
     }
@@ -169,7 +196,7 @@ public class BetManager : MonoBehaviour
         }
     }
 
-    public void enableButtons()
+    public void EnableButtons()
     {
         foreach (Button button in buttons)
         {
@@ -219,5 +246,39 @@ public class BetManager : MonoBehaviour
         }
 
         totalBetValueText.text = $"Current Play: {totalValue}";
+    }
+
+    private void UpdateBets(string buttonName, int betValue)
+    {
+        if (betsPlaced.ContainsKey(buttonName))
+        {
+            betsPlaced[buttonName] += betValue;
+        }
+        else
+        {
+            betsPlaced[buttonName] = betValue;
+        }
+    }
+
+    public Dictionary<string, int> GetBetsPlaced()
+    {
+        return new Dictionary<string, int>(betsPlaced);
+    }
+
+    public void DestroyAllImages()
+    {
+        Debug.Log("DestroyAllImages called. Bets placed:");
+        foreach (var bet in betsPlaced)
+        {
+            Debug.Log($"Button: {bet.Key}, Bet: {bet.Value}");
+        }
+
+        foreach (GameObject image in imagesToActivate)
+        {
+            Destroy(image);
+        }
+        imagesToActivate.Clear();
+        betsPlaced.Clear();
+        UpdateTotalBetValue();
     }
 }

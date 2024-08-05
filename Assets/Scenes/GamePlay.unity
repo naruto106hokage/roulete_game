@@ -11713,8 +11713,8 @@ RectTransform:
   m_GameObject: {fileID: 455817018}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.67, y: 0.67, z: 0.67}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1166015963}
   - {fileID: 1708578776}
@@ -11724,10 +11724,10 @@ RectTransform:
   - {fileID: 1490417182}
   - {fileID: 253896845}
   - {fileID: 625784717}
-  - {fileID: 319095553}
-  - {fileID: 1805031721}
-  - {fileID: 618460370}
   - {fileID: 1761393794}
+  - {fileID: 1805031721}
+  - {fileID: 319095553}
+  - {fileID: 618460370}
   m_Father: {fileID: 1398155346}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -37368,7 +37368,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ReferenceResolution: {x: 1280, y: 720}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
@@ -42848,6 +42848,10 @@ MonoBehaviour:
   - {fileID: 2062834155}
   - {fileID: 1923671902}
   - {fileID: 1675864815}
+  - {fileID: 2116573343}
+  - {fileID: 1760068754}
+  - {fileID: 517476475}
+  - {fileID: 626719572}
   levelSprites:
   - {fileID: 21300000, guid: c10a4089c8947ec4fb650d62c7892f7f, type: 3}
   - {fileID: 21300000, guid: 4a65f21c58f4dfd4495e61fb81890bc1, type: 3}
@@ -42866,6 +42870,11 @@ MonoBehaviour:
   - {fileID: 1196213140}
   bannerCanvasGroup: {fileID: 863153620}
   totalBetValueText: {fileID: 832164128}
+  neighbourBetImages:
+  - {fileID: 1397586433}
+  - {fileID: 1975326010}
+  - {fileID: 413322178}
+  - {fileID: 793425257}
 --- !u!1 &1572087694
 GameObject:
   m_ObjectHideFlags: 0

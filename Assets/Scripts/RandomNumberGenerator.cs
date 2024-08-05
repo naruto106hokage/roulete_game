@@ -43,6 +43,10 @@ public class RandomNumberGenerator : MonoBehaviour
         timerImage.fillAmount = 0f; 
     }
 
+    public void disableResultNumber()
+    {
+        resultText.gameObject.SetActive(false);
+    }
     public void display(int number)
     {
         resultText.gameObject.SetActive(true);
