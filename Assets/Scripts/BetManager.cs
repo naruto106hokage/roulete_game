@@ -1,32 +1,30 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Import the TextMeshPro namespace
-using System.Collections; // Required for IEnumerator
-using System.Collections.Generic; // Required for List
+using TMPro;
+using UnityEngine.EventSystems; // Required for EventTrigger
+using System.Collections;
+using System.Collections.Generic;
 
 public class BetManager : MonoBehaviour
 {
-    [SerializeField] private GameObject imagePrefab; // Prefab of the image to instantiate
-    [SerializeField] private Button[] buttons; // Array of buttons
-    [SerializeField] private Sprite[] levelSprites; // Array of sprites for different levels
-    [SerializeField] private int[] thresholds; // Value thresholds for changing sprites
-    [SerializeField] private Button[] betValueButtons; // These hold the values for bet increment amount
-    [SerializeField] private CanvasGroup bannerCanvasGroup; // CanvasGroup for the banner to fade
-    [SerializeField] private TextMeshProUGUI totalBetValueText; // TMP Text for total bet value
-    private int selectedBetValue = 0; // Default value
+    [SerializeField] private GameObject imagePrefab;
+    [SerializeField] private Button[] buttons;
+    [SerializeField] private Sprite[] levelSprites;
+    [SerializeField] private int[] thresholds;
+    [SerializeField] private Button[] betValueButtons;
+    [SerializeField] private CanvasGroup bannerCanvasGroup;
+    [SerializeField] private TextMeshProUGUI totalBetValueText;
+    private int selectedBetValue = 0;
 
-    // List to keep track of instantiated images
     private List<GameObject> imagesToActivate = new List<GameObject>();
 
     void Start()
     {
-        // Set up button listeners for images
         foreach (Button button in buttons)
         {
             button.onClick.AddListener(() => OnButtonClick(button));
         }
 
-        // Set up button listeners for bet values
         foreach (Button betButton in betValueButtons)
         {
             betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
@@ -37,7 +35,6 @@ public class BetManager : MonoBehaviour
 
     private void OnBetValueButtonClick(Button betButton)
     {
-        // Parse the bet value from the button's TMP text component
         TextMeshProUGUI tmpText = betButton.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpText != null && int.TryParse(tmpText.text, out int value))
         {
@@ -54,60 +51,47 @@ public class BetManager : MonoBehaviour
     {
         Debug.Log($"Button pressed: {clickedButton.name}");
 
-        // Check if a bet value has been selected
         if (selectedBetValue == 0)
         {
             ShowBanner();
-            return; // Exit the function to prevent further processing
+            return;
         }
 
-        // Instantiate the image prefab
         GameObject newImage = Instantiate(imagePrefab, clickedButton.transform.parent);
-
-        // Set the position of the new image to the position of the clicked button
         RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
         RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
 
         newImageRectTransform.anchoredPosition = buttonRectTransform.anchoredPosition;
-
-        // Reset the rotation and set the scale to half
         newImage.transform.localRotation = Quaternion.identity;
-        newImage.transform.localScale = Vector3.one * 0.5f; // Set scale to half
+        newImage.transform.localScale = Vector3.one * 0.5f;
 
-        // Add the new image to the list
         imagesToActivate.Add(newImage);
 
-        // Check if the new image already has a TMP component
         TextMeshProUGUI tmpComponent = newImage.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpComponent == null)
         {
-            // Add a TMP component if it doesn't exist
             GameObject tmpObj = new GameObject("TMPText");
             tmpObj.transform.SetParent(newImage.transform);
 
-            // Set up the TMP component
             tmpComponent = tmpObj.AddComponent<TextMeshProUGUI>();
-            tmpComponent.text = "0"; // Initialize with 0
+            tmpComponent.text = "0";
             tmpComponent.alignment = TextAlignmentOptions.Center;
-            tmpComponent.color = Color.black; // Set font color to black
-            tmpComponent.fontSize = 20; // Set font size to 20
+            tmpComponent.color = Color.black;
+            tmpComponent.fontSize = 20;
 
-            // Set the RectTransform properties
             RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.sizeDelta = new Vector2(40, 40); // Adjust size as needed
-            rectTransform.anchoredPosition = Vector2.zero; // Center it
+            rectTransform.sizeDelta = new Vector2(40, 40);
+            rectTransform.anchoredPosition = Vector2.zero;
         }
 
-        // Update the TMP text value
         if (int.TryParse(tmpComponent.text, out int currentValue))
         {
             int newValue = currentValue + selectedBetValue;
             tmpComponent.text = newValue.ToString();
 
-            // Determine the appropriate sprite based on the value
             Sprite appropriateSprite = GetSpriteForValue(newValue);
             if (appropriateSprite != null)
             {
@@ -123,8 +107,41 @@ public class BetManager : MonoBehaviour
             Debug.LogWarning("TextMeshPro component does not contain a valid integer.");
         }
 
-        // Calculate the total bet value and update the TMP text component
+        AddClickEventToChip(newImage);
+
         UpdateTotalBetValue();
+    }
+
+    private void AddClickEventToChip(GameObject chip)
+    {
+        EventTrigger trigger = chip.AddComponent<EventTrigger>();
+
+        EventTrigger.Entry entry = new EventTrigger.Entry();
+        entry.eventID = EventTriggerType.PointerClick;
+        entry.callback.AddListener((data) => { OnChipClick((PointerEventData)data, chip); });
+        trigger.triggers.Add(entry);
+    }
+
+    private void OnChipClick(PointerEventData data, GameObject chip)
+    {
+        TextMeshProUGUI tmpComponent = chip.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmpComponent != null && int.TryParse(tmpComponent.text, out int currentValue))
+        {
+            int newValue = currentValue + selectedBetValue;
+            tmpComponent.text = newValue.ToString();
+
+            Sprite appropriateSprite = GetSpriteForValue(newValue);
+            if (appropriateSprite != null)
+            {
+                Image imgComponent = chip.GetComponent<Image>();
+                if (imgComponent != null)
+                {
+                    imgComponent.sprite = appropriateSprite;
+                }
+            }
+
+            UpdateTotalBetValue();
+        }
     }
 
     private Sprite GetSpriteForValue(int value)
@@ -136,7 +153,7 @@ public class BetManager : MonoBehaviour
                 return levelSprites[i];
             }
         }
-        return null; // Return null if no threshold is met
+        return null;
     }
 
     public void invokeDisableButtons(float time)
@@ -164,7 +181,7 @@ public class BetManager : MonoBehaviour
     {
         bannerCanvasGroup.alpha = 1;
         bannerCanvasGroup.gameObject.SetActive(true);
-        Invoke("FadeOutBanner", 1f); // Fade out after 1 second
+        Invoke("FadeOutBanner", 1f);
     }
 
     private void FadeOutBanner()
@@ -201,7 +218,6 @@ public class BetManager : MonoBehaviour
             }
         }
 
-        // Update the TMP text component with the total bet value
         totalBetValueText.text = $"Current Play: {totalValue}";
     }
 }
