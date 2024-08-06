@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 public class BetManager : MonoBehaviour
 {
@@ -17,7 +18,9 @@ public class BetManager : MonoBehaviour
     [SerializeField] private Image[] neighbourBetImages;
     [SerializeField] private Button clearBet;
     [SerializeField] private Button doubleBet;
+    [SerializeField] private Button removeBetButton; // Button to activate delete mode
     private int selectedBetValue = 0;
+    private bool isDeleteModeActive = false;
 
     private List<GameObject> imagesToActivate = new List<GameObject>();
     private Dictionary<string, int> betsPlaced = new Dictionary<string, int>();
@@ -36,6 +39,7 @@ public class BetManager : MonoBehaviour
 
         clearBet.onClick.AddListener(() => DestroyAllImages());
         doubleBet.onClick.AddListener(() => DoubleAllBets());
+        removeBetButton.onClick.AddListener(() => ToggleDeleteMode());
 
         EnableButtons();
     }
@@ -68,16 +72,13 @@ public class BetManager : MonoBehaviour
         RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
         RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
 
-        // Set the anchored position of the new image to the button's position
         newImageRectTransform.anchoredPosition = buttonRectTransform.anchoredPosition;
         newImage.transform.localRotation = Quaternion.identity;
 
-        // Check if the button name is one of the specific ones that require different size
         foreach (var neighbourBetImage in neighbourBetImages)
         {
             if (string.Equals(neighbourBetImage.name, clickedButton.name, System.StringComparison.OrdinalIgnoreCase))
             {
-                // Set the image properties to match the neighbourBetImage
                 newImageRectTransform.sizeDelta = neighbourBetImage.GetComponent<RectTransform>().sizeDelta;
                 newImageRectTransform.anchoredPosition = neighbourBetImage.GetComponent<RectTransform>().anchoredPosition;
                 newImageRectTransform.localScale = neighbourBetImage.GetComponent<RectTransform>().localScale;
@@ -115,7 +116,6 @@ public class BetManager : MonoBehaviour
         {
             int newValue = currentValue + selectedBetValue;
             tmpComponent.text = newValue.ToString();
-            SetFontSize(tmpComponent, newValue);
 
             Sprite appropriateSprite = GetSpriteForValue(newValue);
             if (appropriateSprite != null)
@@ -150,12 +150,29 @@ public class BetManager : MonoBehaviour
 
     private void OnChipClick(PointerEventData data, GameObject chip)
     {
+        if (isDeleteModeActive)
+        {
+            Destroy(chip);
+            imagesToActivate.Remove(chip);
+
+            string buttonName = chip.transform.parent.name;
+            if (betsPlaced.ContainsKey(buttonName))
+            {
+                betsPlaced[buttonName] -= selectedBetValue;
+                if (betsPlaced[buttonName] <= 0)
+                {
+                    betsPlaced.Remove(buttonName);
+                }
+                UpdateTotalBetValue();
+            }
+            return;
+        }
+
         TextMeshProUGUI tmpComponent = chip.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpComponent != null && int.TryParse(tmpComponent.text, out int currentValue))
         {
             int newValue = currentValue + selectedBetValue;
             tmpComponent.text = newValue.ToString();
-            SetFontSize(tmpComponent, newValue);
 
             Sprite appropriateSprite = GetSpriteForValue(newValue);
             if (appropriateSprite != null)
@@ -182,22 +199,6 @@ public class BetManager : MonoBehaviour
             }
         }
         return null;
-    }
-
-    private void SetFontSize(TextMeshProUGUI tmpComponent, int value)
-    {
-        if (value >= 1000)
-        {
-            tmpComponent.fontSize = 14;
-        }
-        else if (value >= 100)
-        {
-            tmpComponent.fontSize = 16;
-        }
-        else
-        {
-            tmpComponent.fontSize = 20;
-        }
     }
 
     public void InvokeDisableButtons(float time)
@@ -255,14 +256,17 @@ public class BetManager : MonoBehaviour
 
         foreach (GameObject image in imagesToActivate)
         {
-            TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
-            if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
+            if (image != null)
             {
-                totalValue += value;
+                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
+                {
+                    totalValue += value;
+                }
             }
         }
 
-        totalBetValueText.text = totalValue.ToString();
+        totalBetValueText.text = $"Current Play: {totalValue}";
     }
 
     private void UpdateBets(string buttonName, int betValue)
@@ -299,37 +303,41 @@ public class BetManager : MonoBehaviour
         UpdateTotalBetValue();
     }
 
+    private void ToggleDeleteMode()
+    {
+        isDeleteModeActive = !isDeleteModeActive;
+        Color buttonColor = isDeleteModeActive ? new Color32(255, 115, 110, 255) : Color.white;
+        removeBetButton.GetComponent<Image>().color = buttonColor;
+    }
+
     private void DoubleAllBets()
     {
-        // Create a list of keys to iterate over
-        List<string> keys = new List<string>(betsPlaced.Keys);
-
-        // Double the bet values in the dictionary
-        foreach (var key in keys)
-        {
-            betsPlaced[key] *= 2;
-        }
-
-        // Update the text and sprites on the chips
         foreach (GameObject image in imagesToActivate)
         {
-            TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
-            if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
+            if (image != null)
             {
-                int newValue = value * 2;
-                tmpComponent.text = newValue.ToString();
-                SetFontSize(tmpComponent, newValue);
-
-                Sprite appropriateSprite = GetSpriteForValue(newValue);
-                if (appropriateSprite != null)
+                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmpComponent != null && int.TryParse(tmpComponent.text, out int currentValue))
                 {
-                    Image imgComponent = image.GetComponent<Image>();
-                    if (imgComponent != null)
+                    int newValue = currentValue * 2;
+                    tmpComponent.text = newValue.ToString();
+
+                    Sprite appropriateSprite = GetSpriteForValue(newValue);
+                    if (appropriateSprite != null)
                     {
-                        imgComponent.sprite = appropriateSprite;
+                        Image imgComponent = image.GetComponent<Image>();
+                        if (imgComponent != null)
+                        {
+                            imgComponent.sprite = appropriateSprite;
+                        }
                     }
                 }
             }
+        }
+
+        foreach (var key in new List<string>(betsPlaced.Keys))
+        {
+            betsPlaced[key] *= 2;
         }
 
         UpdateTotalBetValue();
