@@ -15,6 +15,8 @@ public class BetManager : MonoBehaviour
     [SerializeField] private CanvasGroup bannerCanvasGroup;
     [SerializeField] private TextMeshProUGUI totalBetValueText;
     [SerializeField] private Image[] neighbourBetImages;
+    [SerializeField] private Button clearBet;
+    [SerializeField] private Button doubleBet;
     private int selectedBetValue = 0;
 
     private List<GameObject> imagesToActivate = new List<GameObject>();
@@ -31,6 +33,9 @@ public class BetManager : MonoBehaviour
         {
             betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
         }
+
+        clearBet.onClick.AddListener(() => DestroyAllImages());
+        doubleBet.onClick.AddListener(() => DoubleAllBets());
 
         EnableButtons();
     }
@@ -68,26 +73,20 @@ public class BetManager : MonoBehaviour
         newImage.transform.localRotation = Quaternion.identity;
 
         // Check if the button name is one of the specific ones that require different size
-        if (clickedButton.name == "Tiers" || clickedButton.name == "Orphelin" || clickedButton.name == "Voisin" || clickedButton.name == "Zero")
+        foreach (var neighbourBetImage in neighbourBetImages)
         {
-            foreach (var neighbourBetImage in neighbourBetImages)
+            if (string.Equals(neighbourBetImage.name, clickedButton.name, System.StringComparison.OrdinalIgnoreCase))
             {
-                if (neighbourBetImage.name == clickedButton.name)
-                {
-                    // Set the image properties to match the neighbourBetImage
-                    newImageRectTransform.sizeDelta = neighbourBetImage.GetComponent<RectTransform>().sizeDelta;
-                    newImageRectTransform.anchoredPosition = neighbourBetImage.GetComponent<RectTransform>().anchoredPosition;
-                    newImageRectTransform.localScale = neighbourBetImage.GetComponent<RectTransform>().localScale;
-                    newImageRectTransform.pivot = neighbourBetImage.GetComponent<RectTransform>().pivot;
-                    newImageRectTransform.anchorMin = neighbourBetImage.GetComponent<RectTransform>().anchorMin;
-                    newImageRectTransform.anchorMax = neighbourBetImage.GetComponent<RectTransform>().anchorMax;
-                    newImageRectTransform.rotation = neighbourBetImage.GetComponent<RectTransform>().rotation;
-                }
+                // Set the image properties to match the neighbourBetImage
+                newImageRectTransform.sizeDelta = neighbourBetImage.GetComponent<RectTransform>().sizeDelta;
+                newImageRectTransform.anchoredPosition = neighbourBetImage.GetComponent<RectTransform>().anchoredPosition;
+                newImageRectTransform.localScale = neighbourBetImage.GetComponent<RectTransform>().localScale;
+                newImageRectTransform.pivot = neighbourBetImage.GetComponent<RectTransform>().pivot;
+                newImageRectTransform.anchorMin = neighbourBetImage.GetComponent<RectTransform>().anchorMin;
+                newImageRectTransform.anchorMax = neighbourBetImage.GetComponent<RectTransform>().anchorMax;
+                newImageRectTransform.rotation = neighbourBetImage.GetComponent<RectTransform>().rotation;
+                break;
             }
-        }
-        else
-        {
-            newImage.transform.localScale = Vector3.one * 0.5f;
         }
 
         imagesToActivate.Add(newImage);
@@ -116,6 +115,7 @@ public class BetManager : MonoBehaviour
         {
             int newValue = currentValue + selectedBetValue;
             tmpComponent.text = newValue.ToString();
+            SetFontSize(tmpComponent, newValue);
 
             Sprite appropriateSprite = GetSpriteForValue(newValue);
             if (appropriateSprite != null)
@@ -155,6 +155,7 @@ public class BetManager : MonoBehaviour
         {
             int newValue = currentValue + selectedBetValue;
             tmpComponent.text = newValue.ToString();
+            SetFontSize(tmpComponent, newValue);
 
             Sprite appropriateSprite = GetSpriteForValue(newValue);
             if (appropriateSprite != null)
@@ -181,6 +182,22 @@ public class BetManager : MonoBehaviour
             }
         }
         return null;
+    }
+
+    private void SetFontSize(TextMeshProUGUI tmpComponent, int value)
+    {
+        if (value >= 1000)
+        {
+            tmpComponent.fontSize = 14;
+        }
+        else if (value >= 100)
+        {
+            tmpComponent.fontSize = 16;
+        }
+        else
+        {
+            tmpComponent.fontSize = 20;
+        }
     }
 
     public void InvokeDisableButtons(float time)
@@ -245,7 +262,7 @@ public class BetManager : MonoBehaviour
             }
         }
 
-        totalBetValueText.text = $"Current Play: {totalValue}";
+        totalBetValueText.text = totalValue.ToString();
     }
 
     private void UpdateBets(string buttonName, int betValue)
@@ -279,6 +296,42 @@ public class BetManager : MonoBehaviour
         }
         imagesToActivate.Clear();
         betsPlaced.Clear();
+        UpdateTotalBetValue();
+    }
+
+    private void DoubleAllBets()
+    {
+        // Create a list of keys to iterate over
+        List<string> keys = new List<string>(betsPlaced.Keys);
+
+        // Double the bet values in the dictionary
+        foreach (var key in keys)
+        {
+            betsPlaced[key] *= 2;
+        }
+
+        // Update the text and sprites on the chips
+        foreach (GameObject image in imagesToActivate)
+        {
+            TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
+            {
+                int newValue = value * 2;
+                tmpComponent.text = newValue.ToString();
+                SetFontSize(tmpComponent, newValue);
+
+                Sprite appropriateSprite = GetSpriteForValue(newValue);
+                if (appropriateSprite != null)
+                {
+                    Image imgComponent = image.GetComponent<Image>();
+                    if (imgComponent != null)
+                    {
+                        imgComponent.sprite = appropriateSprite;
+                    }
+                }
+            }
+        }
+
         UpdateTotalBetValue();
     }
 }
