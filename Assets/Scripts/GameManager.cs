@@ -10,15 +10,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BoardManager boardManager;
     [SerializeField] private ListManager listManager;
     [SerializeField] private BetManager betManager;
+    [SerializeField] private ResultCalculator resultCalculator;
 
 
-     private float repeatInterval = 40f;
-     private float playAgain = 5f;
+    private float repeatInterval = 40f;
+    private float playAgain = 5f;
 
     private const string PlayerPrefsKey = "RandomNumbersList";
     private const int MaxRandomNumbers = 13;
 
     private List<int> randomNumbers = new List<int>();
+    private Dictionary<string,int> betPositions = new Dictionary<string, int>();
 
     private void Awake()
     {
@@ -52,16 +54,17 @@ public class GameManager : MonoBehaviour
         randomNumberGenerator.disableResultNumber();
         betManager.DestroyAllImages();
         betManager.EnableButtons();
-        betManager.InvokeDisableButtons(repeatInterval-1);
+        betManager.InvokeDisableButtons(repeatInterval - 1);
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
-        betManager.DestroyAllImages();
-        int randomNumber = Random.Range(0, 37);
+        betPositions = betManager.displayBetPositions();
+        betManager.DeactivateAllImages();
+        int randomNumber = 5;//Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
         betManager.DisableButtons();
         AddRandomNumber(randomNumber);
         resultWheelHandler.disableAll();
         yield return StartCoroutine(resultWheelHandler.rotateTheWheel());
-
+        resultCalculator.calculateResult(randomNumber, betPositions);
         resultWheelHandler.displayResult(randomNumber);
         randomNumberGenerator.display(randomNumber);
         boardManager.setBoardMarker(randomNumber);

@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.Events;
 
 public class BetManager : MonoBehaviour
 {
@@ -24,6 +23,7 @@ public class BetManager : MonoBehaviour
 
     private List<GameObject> imagesToActivate = new List<GameObject>();
     private Dictionary<string, int> betsPlaced = new Dictionary<string, int>();
+    private Dictionary<string, int> positionOfBetPlaced = new Dictionary<string, int>(); // Dictionary to store image names and bet amounts
 
     void Start()
     {
@@ -69,6 +69,7 @@ public class BetManager : MonoBehaviour
         }
 
         GameObject newImage = Instantiate(imagePrefab, clickedButton.transform.parent);
+        newImage.name = clickedButton.name; // Set the name of the new image to the button's name
         RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
         RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
 
@@ -91,6 +92,7 @@ public class BetManager : MonoBehaviour
         }
 
         imagesToActivate.Add(newImage);
+        positionOfBetPlaced[newImage.name] = selectedBetValue; // Add the name of the new image and the bet amount to the dictionary
 
         TextMeshProUGUI tmpComponent = newImage.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpComponent == null)
@@ -101,7 +103,7 @@ public class BetManager : MonoBehaviour
             tmpComponent = tmpObj.AddComponent<TextMeshProUGUI>();
             tmpComponent.text = "0";
             tmpComponent.alignment = TextAlignmentOptions.Center;
-            tmpComponent.color = Color.black;
+            tmpComponent.color = UnityEngine.Color.black;
             tmpComponent.fontSize = 20;
 
             RectTransform rectTransform = tmpComponent.GetComponent<RectTransform>();
@@ -154,6 +156,7 @@ public class BetManager : MonoBehaviour
         {
             Destroy(chip);
             imagesToActivate.Remove(chip);
+            positionOfBetPlaced.Remove(chip.name); // Remove the chip's name from the dictionary
 
             string buttonName = chip.transform.parent.name;
             if (betsPlaced.ContainsKey(buttonName))
@@ -266,7 +269,7 @@ public class BetManager : MonoBehaviour
             }
         }
 
-        totalBetValueText.text = $"Current Play: {totalValue}";
+        totalBetValueText.text = totalValue.ToString();
     }
 
     private void UpdateBets(string buttonName, int betValue)
@@ -277,18 +280,14 @@ public class BetManager : MonoBehaviour
         }
         else
         {
-            betsPlaced[buttonName] = betValue;
+            betsPlaced.Add(buttonName, betValue);
         }
-    }
-
-    public Dictionary<string, int> GetBetsPlaced()
-    {
-        return new Dictionary<string, int>(betsPlaced);
     }
 
     public void DestroyAllImages()
     {
-        Debug.Log("DestroyAllImages called. Bets placed:");
+        Debug.Log("Destroying all images");
+
         foreach (var bet in betsPlaced)
         {
             Debug.Log($"Button: {bet.Key}, Bet: {bet.Value}");
@@ -299,6 +298,7 @@ public class BetManager : MonoBehaviour
             Destroy(image);
         }
         imagesToActivate.Clear();
+        positionOfBetPlaced.Clear(); // Clear the dictionary of image names
         betsPlaced.Clear();
         UpdateTotalBetValue();
     }
@@ -306,7 +306,7 @@ public class BetManager : MonoBehaviour
     private void ToggleDeleteMode()
     {
         isDeleteModeActive = !isDeleteModeActive;
-        Color buttonColor = isDeleteModeActive ? new Color32(255, 115, 110, 255) : Color.white;
+        UnityEngine.Color buttonColor = isDeleteModeActive ? new Color32(255, 115, 110, 255) : UnityEngine.Color.white;
         removeBetButton.GetComponent<Image>().color = buttonColor;
     }
 
@@ -341,5 +341,26 @@ public class BetManager : MonoBehaviour
         }
 
         UpdateTotalBetValue();
+    }
+
+    public void DeactivateAllImages()
+    {
+        foreach (GameObject image in imagesToActivate)
+        {
+            if (image != null)
+            {
+                image.SetActive(false);
+            }
+        }
+    }
+
+    public Dictionary<string, int> displayBetPositions()
+    {
+        Debug.Log("<color=red>Bet was placed on</color>");
+        foreach (var betPlaced in positionOfBetPlaced)
+        {
+            Debug.Log("<color=blue> Number : " + betPlaced.Key + " , Bet Amount: " + betPlaced.Value + " </color>");
+        }
+        return positionOfBetPlaced;
     }
 }
