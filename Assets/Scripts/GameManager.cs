@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         betPositions = betManager.displayBetPositions();
         betManager.DeactivateAllImages();
-        int randomNumber = 5;//Random.Range(0, 37);
+        int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
         betManager.DisableButtons();
         AddRandomNumber(randomNumber);

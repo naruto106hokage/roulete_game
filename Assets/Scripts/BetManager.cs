@@ -92,7 +92,6 @@ public class BetManager : MonoBehaviour
         }
 
         imagesToActivate.Add(newImage);
-        positionOfBetPlaced[newImage.name] = selectedBetValue; // Add the name of the new image and the bet amount to the dictionary
 
         TextMeshProUGUI tmpComponent = newImage.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpComponent == null)
@@ -128,6 +127,9 @@ public class BetManager : MonoBehaviour
                     imgComponent.sprite = appropriateSprite;
                 }
             }
+
+            // Update the positionOfBetPlaced dictionary with the new bet amount
+            positionOfBetPlaced[newImage.name] = newValue;
         }
         else
         {
@@ -186,6 +188,9 @@ public class BetManager : MonoBehaviour
                     imgComponent.sprite = appropriateSprite;
                 }
             }
+
+            // Update the positionOfBetPlaced dictionary with the new bet amount
+            positionOfBetPlaced[chip.name] = newValue;
 
             UpdateBets(chip.transform.parent.name, selectedBetValue);
             UpdateTotalBetValue();
@@ -331,6 +336,9 @@ public class BetManager : MonoBehaviour
                             imgComponent.sprite = appropriateSprite;
                         }
                     }
+
+                    // Update the positionOfBetPlaced dictionary with the new bet amount
+                    positionOfBetPlaced[image.name] = newValue;
                 }
             }
         }
