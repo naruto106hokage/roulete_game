@@ -1,9 +1,10 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Linq;
 
 public class BetManager : MonoBehaviour
 {
@@ -13,11 +14,13 @@ public class BetManager : MonoBehaviour
     [SerializeField] private int[] thresholds;
     [SerializeField] private Button[] betValueButtons;
     [SerializeField] private CanvasGroup bannerCanvasGroup;
+    [SerializeField] private CanvasGroup smallBetBannerCanvasGroup; // New CanvasGroup for small bets
     [SerializeField] private TextMeshProUGUI totalBetValueText;
     [SerializeField] private Image[] neighbourBetImages;
     [SerializeField] private Button clearBet;
     [SerializeField] private Button doubleBet;
     [SerializeField] private Button removeBetButton; // Button to activate delete mode
+
     private int selectedBetValue = 0;
     private bool isDeleteModeActive = false;
 
@@ -37,11 +40,11 @@ public class BetManager : MonoBehaviour
             betButton.onClick.AddListener(() => OnBetValueButtonClick(betButton));
         }
 
-        clearBet.onClick.AddListener(() => DestroyAllImages());
-        doubleBet.onClick.AddListener(() => DoubleAllBets());
-        removeBetButton.onClick.AddListener(() => ToggleDeleteMode());
+        clearBet.onClick.AddListener(DestroyAllImages);
+        doubleBet.onClick.AddListener(DoubleAllBets);
+        removeBetButton.onClick.AddListener(ToggleDeleteMode);
 
-        EnableButtons();
+        EnableButtons(true);
     }
 
     private void OnBetValueButtonClick(Button betButton)
@@ -64,21 +67,32 @@ public class BetManager : MonoBehaviour
 
         if (selectedBetValue == 0)
         {
-            ShowBanner();
+            ShowBanner("Select a bet value first.");
             return;
         }
 
+        string buttonName = clickedButton.name;
+        if (selectedBetValue < 10)
+        {
+            if (!IsValidSingleNumberButton(buttonName))
+            {
+                ShowBanner("Small bets can only be placed on single numbers.");
+                return;
+            }
+        }
+
         GameObject newImage = Instantiate(imagePrefab, clickedButton.transform.parent);
-        newImage.name = clickedButton.name; // Set the name of the new image to the button's name
+        newImage.name = buttonName; // Set the name of the new image to the button's name
         RectTransform buttonRectTransform = clickedButton.GetComponent<RectTransform>();
         RectTransform newImageRectTransform = newImage.GetComponent<RectTransform>();
 
+        // Copy position and size from the button
         newImageRectTransform.anchoredPosition = buttonRectTransform.anchoredPosition;
         newImage.transform.localRotation = Quaternion.identity;
 
         foreach (var neighbourBetImage in neighbourBetImages)
         {
-            if (string.Equals(neighbourBetImage.name, clickedButton.name, System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(neighbourBetImage.name, buttonName, System.StringComparison.OrdinalIgnoreCase))
             {
                 newImageRectTransform.sizeDelta = neighbourBetImage.GetComponent<RectTransform>().sizeDelta;
                 newImageRectTransform.anchoredPosition = neighbourBetImage.GetComponent<RectTransform>().anchoredPosition;
@@ -92,6 +106,7 @@ public class BetManager : MonoBehaviour
         }
 
         imagesToActivate.Add(newImage);
+        positionOfBetPlaced[newImage.name] = selectedBetValue; // Add the name of the new image and the bet amount to the dictionary
 
         TextMeshProUGUI tmpComponent = newImage.GetComponentInChildren<TextMeshProUGUI>();
         if (tmpComponent == null)
@@ -127,9 +142,6 @@ public class BetManager : MonoBehaviour
                     imgComponent.sprite = appropriateSprite;
                 }
             }
-
-            // Update the positionOfBetPlaced dictionary with the new bet amount
-            positionOfBetPlaced[newImage.name] = newValue;
         }
         else
         {
@@ -138,8 +150,17 @@ public class BetManager : MonoBehaviour
 
         AddClickEventToChip(newImage);
 
-        UpdateBets(clickedButton.name, selectedBetValue);
+        UpdateBets(buttonName, selectedBetValue);
         UpdateTotalBetValue();
+    }
+
+    private bool IsValidSingleNumberButton(string buttonName)
+    {
+        if (int.TryParse(buttonName, out int number))
+        {
+            return number >= 0 && number <= 36;
+        }
+        return false;
     }
 
     private void AddClickEventToChip(GameObject chip)
@@ -189,9 +210,6 @@ public class BetManager : MonoBehaviour
                 }
             }
 
-            // Update the positionOfBetPlaced dictionary with the new bet amount
-            positionOfBetPlaced[chip.name] = newValue;
-
             UpdateBets(chip.transform.parent.name, selectedBetValue);
             UpdateTotalBetValue();
         }
@@ -222,19 +240,34 @@ public class BetManager : MonoBehaviour
         }
     }
 
-    public void EnableButtons()
+    public void EnableButtons(bool enable)
     {
         foreach (Button button in buttons)
         {
-            button.interactable = true;
+            button.interactable = enable;
         }
     }
 
-    private void ShowBanner()
+    private void ShowBanner(string message)
     {
-        bannerCanvasGroup.alpha = 1;
-        bannerCanvasGroup.gameObject.SetActive(true);
-        Invoke("FadeOutBanner", 1f);
+        if (selectedBetValue < 10) // Show the small bet banner if the selected bet value is less than 10
+        {
+            smallBetBannerCanvasGroup.alpha = 1;
+            smallBetBannerCanvasGroup.gameObject.SetActive(true);
+            Invoke("FadeOutSmallBetBanner", 1f);
+        }
+        else
+        {
+            totalBetValueText.text = message;
+            bannerCanvasGroup.alpha = 1;
+            bannerCanvasGroup.gameObject.SetActive(true);
+            Invoke("FadeOutBanner", 1f);
+        }
+    }
+
+    private void FadeOutSmallBetBanner()
+    {
+        StartCoroutine(FadeCanvasGroup(smallBetBannerCanvasGroup, 1f, 0f, 3f));
     }
 
     private void FadeOutBanner()
@@ -252,114 +285,64 @@ public class BetManager : MonoBehaviour
             yield return null;
         }
         cg.alpha = end;
-        if (end == 0)
-        {
-            cg.gameObject.SetActive(false);
-        }
+        cg.gameObject.SetActive(end > 0);
     }
 
-    private void UpdateTotalBetValue()
+    private void UpdateBets(string position, int amount)
     {
-        int totalValue = 0;
-
-        foreach (GameObject image in imagesToActivate)
+        if (betsPlaced.ContainsKey(position))
         {
-            if (image != null)
-            {
-                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
-                if (tmpComponent != null && int.TryParse(tmpComponent.text, out int value))
-                {
-                    totalValue += value;
-                }
-            }
-        }
-
-        totalBetValueText.text = totalValue.ToString();
-    }
-
-    private void UpdateBets(string buttonName, int betValue)
-    {
-        if (betsPlaced.ContainsKey(buttonName))
-        {
-            betsPlaced[buttonName] += betValue;
+            betsPlaced[position] += amount;
         }
         else
         {
-            betsPlaced.Add(buttonName, betValue);
+            betsPlaced[position] = amount;
         }
     }
 
     public void DestroyAllImages()
     {
-        Debug.Log("Destroying all images");
-
-        foreach (var bet in betsPlaced)
-        {
-            Debug.Log($"Button: {bet.Key}, Bet: {bet.Value}");
-        }
-
-        foreach (GameObject image in imagesToActivate)
+        foreach (var image in imagesToActivate)
         {
             Destroy(image);
         }
         imagesToActivate.Clear();
-        positionOfBetPlaced.Clear(); // Clear the dictionary of image names
         betsPlaced.Clear();
+        UpdateTotalBetValue();
+    }
+
+    private void DeactivateAllImages()
+    {
+        foreach (var image in imagesToActivate)
+        {
+            image.SetActive(false);
+        }
+    }
+
+    private void DoubleAllBets()
+    {
+        foreach (var key in betsPlaced.Keys.ToList())
+        {
+            betsPlaced[key] *= 2;
+        }
         UpdateTotalBetValue();
     }
 
     private void ToggleDeleteMode()
     {
         isDeleteModeActive = !isDeleteModeActive;
-        UnityEngine.Color buttonColor = isDeleteModeActive ? new Color32(255, 115, 110, 255) : UnityEngine.Color.white;
-        removeBetButton.GetComponent<Image>().color = buttonColor;
+        string mode = isDeleteModeActive ? "Delete Mode Activated" : "Delete Mode Deactivated";
+        ShowBanner(mode);
     }
 
-    private void DoubleAllBets()
+    private void UpdateTotalBetValue()
     {
-        foreach (GameObject image in imagesToActivate)
+        int totalBetValue = 0;
+        foreach (var bet in betsPlaced.Values)
         {
-            if (image != null)
-            {
-                TextMeshProUGUI tmpComponent = image.GetComponentInChildren<TextMeshProUGUI>();
-                if (tmpComponent != null && int.TryParse(tmpComponent.text, out int currentValue))
-                {
-                    int newValue = currentValue * 2;
-                    tmpComponent.text = newValue.ToString();
-
-                    Sprite appropriateSprite = GetSpriteForValue(newValue);
-                    if (appropriateSprite != null)
-                    {
-                        Image imgComponent = image.GetComponent<Image>();
-                        if (imgComponent != null)
-                        {
-                            imgComponent.sprite = appropriateSprite;
-                        }
-                    }
-
-                    // Update the positionOfBetPlaced dictionary with the new bet amount
-                    positionOfBetPlaced[image.name] = newValue;
-                }
-            }
+            totalBetValue += bet;
         }
-
-        foreach (var key in new List<string>(betsPlaced.Keys))
-        {
-            betsPlaced[key] *= 2;
-        }
-
-        UpdateTotalBetValue();
-    }
-
-    public void DeactivateAllImages()
-    {
-        foreach (GameObject image in imagesToActivate)
-        {
-            if (image != null)
-            {
-                image.SetActive(false);
-            }
-        }
+        totalBetValueText.text =  totalBetValue.ToString();
     }
 
     public Dictionary<string, int> displayBetPositions()

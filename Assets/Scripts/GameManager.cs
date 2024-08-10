@@ -53,11 +53,12 @@ public class GameManager : MonoBehaviour
         boardManager.disableAllMarker();
         randomNumberGenerator.disableResultNumber();
         betManager.DestroyAllImages();
-        betManager.EnableButtons();
-        betManager.InvokeDisableButtons(repeatInterval - 1);
+        betManager.EnableButtons(true);
+        betManager.InvokeDisableButtons(repeatInterval - 5);
+        resultWheelHandler.invokeResultWheel(repeatInterval - 5);
         yield return StartCoroutine(randomNumberGenerator.StartCountdown(repeatInterval));
         betPositions = betManager.displayBetPositions();
-        betManager.DeactivateAllImages();
+        betManager.displayBetPositions();
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
         betManager.DisableButtons();

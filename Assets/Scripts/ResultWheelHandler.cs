@@ -34,7 +34,17 @@ public class ResultWheelHandler : MonoBehaviour
             yield return null; // Wait for the next frame
         }
 
-        wheel.SetActive(false);
+        //wheel.SetActive(false);
+    }
+
+    public void invokeResultWheel(float time)
+    {
+        Invoke("disableResultWheel", time);
+    }
+
+    public void disableResultWheel()
+    {
+        wheelPrefab.SetActive(false);
     }
 
     public void displayResult(int result)
