@@ -61,6 +61,7 @@ public class GameManager : MonoBehaviour
         betManager.displayBetPositions();
         int randomNumber = Random.Range(0, 37);
         Debug.Log("Random Number: " + randomNumber);
+        betManager.DeactivateAllImages();
         betManager.DisableButtons();
         AddRandomNumber(randomNumber);
         resultWheelHandler.disableAll();

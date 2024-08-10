@@ -250,14 +250,24 @@ public class BetManager : MonoBehaviour
 
     private void ShowBanner(string message)
     {
-        if (selectedBetValue < 10) // Show the small bet banner if the selected bet value is less than 10
+        if (selectedBetValue == 0)
         {
+            // Display the general banner when no bet value is selected
+            totalBetValueText.text = message;
+            bannerCanvasGroup.alpha = 1;
+            bannerCanvasGroup.gameObject.SetActive(true);
+            Invoke("FadeOutBanner", 1f);
+        }
+        else if (selectedBetValue < 10)
+        {
+            // Display the small bet banner if the selected bet value is less than 10
             smallBetBannerCanvasGroup.alpha = 1;
             smallBetBannerCanvasGroup.gameObject.SetActive(true);
             Invoke("FadeOutSmallBetBanner", 1f);
         }
         else
         {
+            // Display the general banner for other cases
             totalBetValueText.text = message;
             bannerCanvasGroup.alpha = 1;
             bannerCanvasGroup.gameObject.SetActive(true);
@@ -311,7 +321,7 @@ public class BetManager : MonoBehaviour
         UpdateTotalBetValue();
     }
 
-    private void DeactivateAllImages()
+    public void DeactivateAllImages()
     {
         foreach (var image in imagesToActivate)
         {
@@ -342,16 +352,11 @@ public class BetManager : MonoBehaviour
         {
             totalBetValue += bet;
         }
-        totalBetValueText.text =  totalBetValue.ToString();
+        totalBetValueText.text = "Total Bet: " + totalBetValue;
     }
 
     public Dictionary<string, int> displayBetPositions()
     {
-        Debug.Log("<color=red>Bet was placed on</color>");
-        foreach (var betPlaced in positionOfBetPlaced)
-        {
-            Debug.Log("<color=blue> Number : " + betPlaced.Key + " , Bet Amount: " + betPlaced.Value + " </color>");
-        }
         return positionOfBetPlaced;
     }
 }
