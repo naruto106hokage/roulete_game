@@ -353,6 +353,12 @@ public class BetManager : MonoBehaviour
             totalBetValue += bet;
         }
         totalBetValueText.text = "Total Bet: " + totalBetValue;
+
+        // Activate or deactivate buttons based on total bet value
+        bool buttonsActive = totalBetValue > 0;
+        clearBet.gameObject.SetActive(buttonsActive);
+        doubleBet.gameObject.SetActive(buttonsActive);
+        removeBetButton.gameObject.SetActive(buttonsActive);
     }
 
     public Dictionary<string, int> displayBetPositions()
